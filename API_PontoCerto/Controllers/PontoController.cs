@@ -3,11 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using API_PontoCerto.Data;
 using API_PontoCerto.Models;
 using API_PontoCerto.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API_PontoCerto.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class PontoController : ControllerBase
     {
         private readonly PontoDbContext _context;
