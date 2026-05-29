@@ -1,6 +1,7 @@
 using API_PontoCerto.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -54,17 +55,11 @@ options.AddSecurityRequirement(new OpenApiSecurityRequirement
     });
 });
 
-
 // ================= JWT =================
 
-var key = Encoding.ASCII.GetBytes("PontoCertoAPI_ChaveJWT_MuitoSegura_2026_123456789");
+var key = Encoding.UTF8.GetBytes("PontoCertoAPI_ChaveJWT_MuitoSegura_2026_123456789");
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
 {
     options.RequireHttpsMetadata = false;
@@ -79,7 +74,11 @@ builder.Services.AddAuthentication(options =>
 
         ValidateIssuer = false,
 
-        ValidateAudience = false
+        ValidateAudience = false,
+
+        ValidateLifetime = true,
+
+        ClockSkew = TimeSpan.Zero
     };
 });
 

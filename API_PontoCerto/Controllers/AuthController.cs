@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using API_PontoCerto.Data;
 using API_PontoCerto.DTOs;
-using Microsoft.EntityFrameworkCore;
 
 namespace API_PontoCerto.Controllers
 {
@@ -36,31 +36,38 @@ namespace API_PontoCerto.Controllers
                 });
             }
 
-            var tokenHandler = new JwtSecurityTokenHandler();
+            // CHAVE JWT
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes("PontoCertoAPI_ChaveJWT_MuitoSegura_2026_123456789"));
 
-            var key = Encoding.ASCII.GetBytes("PontoCertoAPI_ChaveJWT_MuitoSegura_2026_123456789");
+            // CREDENCIAIS
+            var credentials = new SigningCredentials(
+                key,
+                SecurityAlgorithms.HmacSha256);
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+            // CLAIMS
+            var claims = new[]
             {
-                Subject = new ClaimsIdentity(new Claim[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-                    new Claim(ClaimTypes.Name, usuario.Nome),
-                    new Claim(ClaimTypes.Email, usuario.Email)
-                }),
-
-                Expires = DateTime.UtcNow.AddHours(2),
-
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha256Signature)
+                new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+                new Claim(ClaimTypes.Name, usuario.Nome),
+                new Claim(ClaimTypes.Email, usuario.Email)
             };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
+            // TOKEN
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.Now.AddHours(2),
+                signingCredentials: credentials
+            );
 
+            // GERAR TOKEN STRING
+            var tokenString = new JwtSecurityTokenHandler()
+                .WriteToken(token);
+
+            // RETORNO
             return Ok(new
             {
-                token = tokenHandler.WriteToken(token),
+                token = tokenString,
                 usuario = usuario.Nome
             });
         }
