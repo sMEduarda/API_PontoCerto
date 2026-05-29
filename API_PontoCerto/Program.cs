@@ -83,7 +83,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 });
 
 // =======================================
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactPolicy",
+        policy =>
+        {
+            policy
+                .AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -98,6 +108,8 @@ app.UseHttpsRedirection();
 
 // JWT
 app.UseAuthentication();
+
+app.UseCors("ReactPolicy");
 
 app.UseAuthorization();
 

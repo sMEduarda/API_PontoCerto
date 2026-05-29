@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using API_PontoCerto.Data;
 using API_PontoCerto.Models;
 
@@ -7,6 +8,7 @@ namespace API_PontoCerto.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UsuarioController : ControllerBase
     {
         private readonly PontoDbContext _context;
@@ -16,22 +18,31 @@ namespace API_PontoCerto.Controllers
             _context = context;
         }
 
-        // GET: api/usuario
+        // ================= LISTAR USUÁRIOS =================
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Usuario>>> GetUsuarios()
         {
             return await _context.Usuarios.ToListAsync();
         }
 
-        // POST: api/usuario
+        // ================= CRIAR USUÁRIO =================
+
         [HttpPost]
         public async Task<ActionResult<Usuario>> CriarUsuario(Usuario usuario)
         {
-            _context.Usuarios.Add(usuario);
+            try
+            {
+                _context.Usuarios.Add(usuario);
 
-            await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
 
-            return Ok(usuario);
+                return Ok(usuario);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

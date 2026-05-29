@@ -4,6 +4,7 @@ using API_PontoCerto.Data;
 using API_PontoCerto.Models;
 using API_PontoCerto.DTOs;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace API_PontoCerto.Controllers
 {
@@ -19,22 +20,81 @@ namespace API_PontoCerto.Controllers
             _context = context;
         }
 
-        // GET: api/ponto
+        // ================= GET =================
+
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PontoRegistro>>> GetRegistros()
+        public async Task<ActionResult> GetRegistros(
+            [FromQuery] string? dataInicio,
+            [FromQuery] string? dataFim
+        )
         {
-            return await _context.PontoRegistros.ToListAsync();
+            // ID DO USUÁRIO LOGADO
+            var usuarioId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            );
+
+            // TIPO DO USUÁRIO
+            var tipoUsuario = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            var query = _context.PontoRegistros
+                .Include(p => p.Usuario)
+                .AsQueryable();
+
+            // SE NÃO FOR ADM -> MOSTRA APENAS OS PRÓPRIOS REGISTROS
+            if (tipoUsuario != "ADM")
+            {
+                query = query.Where(p => p.UsuarioId == usuarioId);
+            }
+
+            // FILTRO DATA INÍCIO
+            if (!string.IsNullOrEmpty(dataInicio))
+            {
+                var inicio = DateTime.Parse(dataInicio);
+                query = query.Where(p => p.Horario >= inicio);
+            }
+
+            // FILTRO DATA FIM
+            if (!string.IsNullOrEmpty(dataFim))
+            {
+                var fim = DateTime.Parse(dataFim).AddDays(1);
+                query = query.Where(p => p.Horario < fim);
+            }
+
+            var registros = await query
+                .OrderByDescending(p => p.Horario)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.UsuarioId,
+                    Usuario = p.Usuario.Nome,
+                    p.TipoRegistro,
+                    p.Horario,
+                    p.Latitude,
+                    p.Longitude,
+                    p.Observacao
+                })
+                .ToListAsync();
+
+            return Ok(registros);
         }
 
-        // POST: api/ponto
+        // ================= POST =================
+
         [HttpPost]
-        public async Task<ActionResult> RegistrarPonto(RegistroPontoDTO dto)
+        public async Task<ActionResult> RegistrarPonto(
+            RegistroPontoDTO dto
+        )
         {
             try
             {
+                // PEGA USUÁRIO DO TOKEN
+                var usuarioId = int.Parse(
+                    User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                );
+
                 var ponto = new PontoRegistro
                 {
-                    UsuarioId = dto.UsuarioId,
+                    UsuarioId = usuarioId,
                     TipoRegistro = dto.TipoRegistro,
                     Latitude = dto.Latitude,
                     Longitude = dto.Longitude,
@@ -55,4 +115,3 @@ namespace API_PontoCerto.Controllers
         }
     }
 }
-

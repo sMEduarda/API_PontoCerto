@@ -38,19 +38,24 @@ namespace API_PontoCerto.Controllers
 
             // CHAVE JWT
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes("PontoCertoAPI_ChaveJWT_MuitoSegura_2026_123456789"));
+                Encoding.UTF8.GetBytes(
+                    "PontoCertoAPI_ChaveJWT_MuitoSegura_2026_123456789"
+                )
+            );
 
             // CREDENCIAIS
             var credentials = new SigningCredentials(
                 key,
-                SecurityAlgorithms.HmacSha256);
+                SecurityAlgorithms.HmacSha256
+            );
 
             // CLAIMS
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
                 new Claim(ClaimTypes.Name, usuario.Nome),
-                new Claim(ClaimTypes.Email, usuario.Email)
+                new Claim(ClaimTypes.Email, usuario.Email),
+                new Claim(ClaimTypes.Role, usuario.TipoUsuario)
             };
 
             // TOKEN
@@ -60,7 +65,7 @@ namespace API_PontoCerto.Controllers
                 signingCredentials: credentials
             );
 
-            // GERAR TOKEN STRING
+            // TOKEN STRING
             var tokenString = new JwtSecurityTokenHandler()
                 .WriteToken(token);
 
@@ -68,7 +73,9 @@ namespace API_PontoCerto.Controllers
             return Ok(new
             {
                 token = tokenString,
-                usuario = usuario.Nome
+                usuario = usuario.Nome,
+                tipo = usuario.TipoUsuario,
+                usuarioId = usuario.Id
             });
         }
     }
